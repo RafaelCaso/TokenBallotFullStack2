@@ -1,9 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { NextPage } from "next";
-import { useState, useEffect } from "react";
-import {useAccount, useSignMessage, useBalance, useReadContract} from "wagmi";
-
+import { formatEther } from "viem";
+import { useAccount, useBalance, useReadContract, useSignMessage } from "wagmi";
 
 const Home: NextPage = () => {
   return (
@@ -38,7 +38,6 @@ function PageBody() {
   );
 }
 
-
 function WalletInfo() {
   const { address, isConnecting, isDisconnected, chain } = useAccount();
   if (address)
@@ -50,7 +49,7 @@ function WalletInfo() {
         <WalletBalance address={address as `0x${string}`}></WalletBalance>
         <TokenInfo address={address as `0x${string}`}></TokenInfo>
         <ApiData address={address as `0x${string}`} />
-        <Vote address={address as `0x${string}`}/>
+        <Vote address={address as `0x${string}`} />
         <GetWinner />
       </div>
     );
@@ -195,12 +194,12 @@ function TokenBalance(params: { address: `0x${string}` }) {
     functionName: "balanceOf",
     args: [params.address],
   });
-
-  const balance = typeof data === "number" ? data : 0;
+  const balance = typeof data === "bigint" ? data : 0n;
+  const displayBalance = formatEther(balance);
 
   if (isLoading) return <div>Fetching balance…</div>;
   if (isError) return <div>Error fetching balance</div>;
-  return <div>Balance: {balance}</div>;
+  return <div>Balance: {displayBalance}</div>;
 }
 
 function RandomWord() {
@@ -251,8 +250,8 @@ function TokenAddressFromApi() {
 
   useEffect(() => {
     fetch("http://localhost:3001/contract-address")
-      .then((res) => res.json())
-      .then((data) => {
+      .then(res => res.json())
+      .then(data => {
         setData(data);
         setLoading(false);
       });
@@ -280,35 +279,31 @@ function RequestTokens(params: { address: string }) {
   if (!data)
     return (
       <div>
-        <input
-          type="string"
-          value={amount}
-          onChange={(e) => setAmount(Number(e.target.value))}
-        />
-      <button
-        className="btn btn-active btn-neutral"
-        onClick={() => {
-          setLoading(true);
-          fetch("http://localhost:3001/mint-tokens", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-          })
-            .then((res) => res.json())
-            .then((data) => {
-              setData(data);
-              setLoading(false);
-            });
-        }}
-      >
-        Request tokens
-      </button>
+        <input type="string" value={amount} onChange={e => setAmount(Number(e.target.value))} />
+        <button
+          className="btn btn-active btn-neutral"
+          onClick={() => {
+            setLoading(true);
+            fetch("http://localhost:3001/mint-tokens", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body),
+            })
+              .then(res => res.json())
+              .then(data => {
+                setData(data);
+                setLoading(false);
+              });
+          }}
+        >
+          Request tokens
+        </button>
       </div>
     );
 
   return (
     <div>
-      <p>Result from API: {data.result ? 'worked' : 'failed'}</p>
+      <p>Result from API: {data.result ? "worked" : "failed"}</p>
     </div>
   );
 }
@@ -316,24 +311,25 @@ function RequestTokens(params: { address: string }) {
 function GetWinner() {
   const [data, setData] = useState<{ result: string }>();
 
-  if(!data){
-  return(
-    <div className="card w-96 bg-primary text-primary-content mt-4">
-    <button
-    className="btn btn-active btn-neutral"
-    onClick={() => {
-      fetch("http://localhost:3001/winner")
-        .then((res) => res.json())
-        .then((data) => {
-          setData(data);
-        });
-    }}
-    >
-      Get Winner
-    </button>
-    </div>
-  )}
-  return <div>Winner: {data.result}</div>
+  if (!data) {
+    return (
+      <div className="card w-96 bg-primary text-primary-content mt-4">
+        <button
+          className="btn btn-active btn-neutral"
+          onClick={() => {
+            fetch("http://localhost:3001/winner")
+              .then(res => res.json())
+              .then(data => {
+                setData(data);
+              });
+          }}
+        >
+          Get Winner
+        </button>
+      </div>
+    );
+  }
+  return <div>Winner: {data.result}</div>;
 }
 
 function Vote(params: { address: string }) {
@@ -348,16 +344,11 @@ function Vote(params: { address: string }) {
         id="ballotNumber"
         type="number"
         value={ballotNumber}
-        onChange={(e) => setBallotNumber(Number(e.target.value))}
+        onChange={e => setBallotNumber(Number(e.target.value))}
       />
 
       <label htmlFor="voteAmount">Vote Amount</label>
-      <input
-        id="voteAmount"
-        type="number"
-        value={voteAmount}
-        onChange={(e) => setVoteAmount(Number(e.target.value))}
-      />
+      <input id="voteAmount" type="number" value={voteAmount} onChange={e => setVoteAmount(Number(e.target.value))} />
       <button
         className="btn btn-active btn-neutral"
         onClick={() => {
@@ -378,17 +369,12 @@ function Vote(params: { address: string }) {
   );
 }
 
-function GrantRole(){
-  const [address, setAddress] = useState('');
+function GrantRole() {
+  const [address, setAddress] = useState("");
   return (
     <div>
       <label htmlFor="address">Address</label>
-      <input
-        id="address"
-        type="text"
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-      />
+      <input id="address" type="text" value={address} onChange={e => setAddress(e.target.value)} />
       <button
         className="btn btn-active btn-neutral"
         onClick={() => {
@@ -396,7 +382,7 @@ function GrantRole(){
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              address: address
+              address: address,
             }),
           });
         }}
@@ -408,7 +394,7 @@ function GrantRole(){
 }
 
 function Delegate(params: { address: string }) {
-  return(
+  return (
     <div>
       <button
         className="btn btn-active btn-neutral"
@@ -417,7 +403,7 @@ function Delegate(params: { address: string }) {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              address: params.address
+              address: params.address,
             }),
           });
         }}
@@ -425,8 +411,7 @@ function Delegate(params: { address: string }) {
         Delegate
       </button>
     </div>
-  )
-
+  );
 }
 
 export default Home;
